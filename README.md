@@ -91,10 +91,6 @@ To tell `launchd` to do this, you need a 'plist' file. I have included [com.tjlu
 	</dict>
 	</plist>
 
-Note: if you save [ss2url.sh][6] somewhere _other_ than `/usr/local/bin/ss2url.sh` be sure to change this line:
-
-		<string>/usr/local/bin/ss2url.sh</string>
-
 If you did NOT change `defaults write com.apple.screencapture location` to `/tmp/` then you ***must*** change this line:
 
 		<string>/tmp</string>
@@ -117,6 +113,20 @@ which should give you output something like this:
 
 	-	0	com.tjluoma.ss2url
 
+
+#### Step 3: Edit [ss2url.sh][6]
+
+At the top of `ss2url.sh` are 3 variables that you ***must*** customize, or else the script will fail 100% of the time.
+
+There are 4 subsequence variables that you _can_ customize.
+
+Be sure to save the file and make it executable
+
+	chmod 755 /usr/local/bin/ss2url.sh
+
+Note: if you save [ss2url.sh][6] somewhere _other_ than `/usr/local/bin/ss2url.sh` be sure to change this line in the `plist`:
+
+		<string>/usr/local/bin/ss2url.sh</string>
 
 
 
