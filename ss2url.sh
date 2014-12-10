@@ -30,6 +30,14 @@ SUCCESS_SND='/Applications/Skitch.app/Contents/Resources/PTW_complete.m4a'
 	# What sound should be played if the scp fails?
 FAIL_SND='/System/Library/Sounds/Sosumi.aiff'
 
+PREFIX=`defaults read com.apple.screencapture name 2>/dev/null`
+
+	[[ "$PREFIX" == "" ]] && PREFIX='Screen Shot'
+
+SUFFIX=`defaults read com.apple.screencapture type 2>/dev/null`
+
+	[[ "$SUFFIX" == "" ]] && SUFFIX='png'
+
 ##########################################################################################
 
 	# if the
@@ -63,22 +71,18 @@ then
 		# If no arguments are given, then we assume we want to process screenshots
 		# and that we need to look for them in a specific directory
 	   DIR=`defaults read com.apple.screencapture location 2>/dev/null`
-	PREFIX=`defaults read com.apple.screencapture name 2>/dev/null`
-	SUFFIX=`defaults read com.apple.screencapture type 2>/dev/null`
 
 		# If we did not get values for those, use the defaults
 	[[ "$DIR" == "" ]]    && DIR="$HOME/Desktop"
-	[[ "$PREFIX" == "" ]] && PREFIX='Screen Shot'
-	[[ "$SUFFIX" == "" ]] && SUFFIX='png'
 
 		# chdir to the directory where screenshots go
 	cd "$DIR"
 
 		# find any files matching the screenshot filename and run this program on it
-	find * -maxdepth 0 -iname "${PREFIX} *\.${SUFFIX}" -exec "$0" {} \;
+	find * -maxdepth 0 -user "$LOGNAME" -iname "${PREFIX} *\.${SUFFIX}" -exec "$0" {} \; 2>/dev/null
 
 		# We're done
-	exit
+	exit 0
 fi
 
 
@@ -88,7 +92,7 @@ do
 	then
 
 		case "$i:t" in
-			Screen\ Shot\ *)
+			"${PREFIX}"\ *)
 					# If the filename starts with the generic screen shot prefix, rename the image
 				rename_image
 			;;
@@ -103,6 +107,22 @@ do
 			# This is the filename without the path
 		SHORT="$i:t"
 
+			# Compare $SHORT to what it would be if we replaced spaces with -
+		TIDY=`echo "$SHORT" | tr -s ' ' '-'`
+
+		if [ "$SHORT" = "$TIDY" ]
+		then
+				# If there is no difference then there are no spaces in the filename
+				# so the Remote Filename can be the same as $SHORT
+			RFILENAME="$SHORT"
+		else
+				# if there IS a difference, there are spaces in the local filename
+				# which we will replace with '-' when we upload it to the server
+				# Note that this is probably not a sufficient replacement for full
+				# URL encoding, but it works well enough for me.
+			RFILENAME="$TIDY"
+		fi
+
 			# play the "We're starting" sound
 		afplay "$START_SND" 2>&1 >/dev/null &|
 
@@ -114,7 +134,7 @@ do
 			# upload the file
 			# NOTE! No consideration is given to existing files. If a file with the
 			# same name already exists, it will be overwritten. This is considered a feature.
-		scp -E "$i" "$RHOST:$RDIR/$i:t"
+		scp -E "${i}" "${RHOST}:${RDIR}/${RFILENAME}"
 
 			# Did `scp` work?
 		EXIT="$?"
@@ -127,7 +147,7 @@ do
 			afplay "$SUCCESS_SND" 2>&1 >/dev/null &|
 
 				# Put together the resulting URL
-			URL="$URL_ROOT/$SHORT"
+			URL="${URL_ROOT}/${RFILENAME}"
 
 				# Tell the user what the URL is, and open the URL if the Growl notification is clicked
 			growlnotify \
@@ -135,14 +155,13 @@ do
 			--message "$URL" --title "On Pasteboard:"
 
 				# put the URL on the pasteboard
-			echo -n "$URL_ROOT/$SHORT" | pbcopy
+			echo -n "${URL_ROOT}/${SHORT}" | pbcopy
 
 				# Move the file to the trash
 			trash "$i" 2>/dev/null || mv -vf "$i" "$HOME/.Trash/"
 
 		else
 				# if we get here, scp failed
-
 
 				# play 'failed' sound
 			afplay "$FAIL_SND" 2>&1 >/dev/null &|
@@ -156,6 +175,6 @@ do
 	fi # if exists
 done
 
-exit
+exit 0
 #
 #EOF

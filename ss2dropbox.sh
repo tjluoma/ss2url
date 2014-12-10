@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/zsh -f
 # Purpose: rename screenshot and automatically upload it to Dropbox
 #
 # From:	Tj Luo.ma
@@ -11,7 +11,8 @@ NAME="$0:t:r"
 zmodload zsh/stat
 zmodload zsh/datetime
 
-# http://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Dropbox_logo.svg/200px-Dropbox_logo.svg.png
+	# http://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Dropbox_logo.svg/200px-Dropbox_logo.svg.png
+	# A copy of this image is included in the repo. Change the path below to reflect where you have it stored locally.
 DB_LOGO="$HOME/Pictures/Logos/Dropbox/Dropbox-200x200.png"
 
 function msg
@@ -35,9 +36,9 @@ fi
 
 function do_upload
 {
-	START_SND='/Applications/Skitch.app/Contents/Resources/PTW_commence.m4a'
+	  START_SND='/Applications/Skitch.app/Contents/Resources/PTW_commence.m4a'
 	SUCCESS_SND='/Applications/Skitch.app/Contents/Resources/PTW_complete.m4a'
-	FAIL_SND='/System/Library/Sounds/Sosumi.aiff'
+	   FAIL_SND='/System/Library/Sounds/Sosumi.aiff'
 
 	[[ -e "$START_SND" ]] && afplay "$START_SND"
 
@@ -64,15 +65,19 @@ function do_upload
 			# put URL on pasteboard
 		echo -n "$SHARE_URL" | pbcopy
 
+			# send URL to stdout
 		echo "$SHARE_URL"
 
+			# show Growl notification
 		growlnotify \
 			--url "$SHARE_URL" --image "$DB_LOGO" --identifier "$NAME" \
 			--message "$SHARE_URL" --title "On Pasteboard:"
 
 	else
+			# upload failed, play sound
 		[[ -e "$FAIL_SND" ]] && afplay "$FAIL_SND"
 
+			# post Growl notification
 		msg "Failed to upload $FILENAME"
 	fi
 
